@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Organization {
+  id           String       @id @default(cuid())
+  name         String
+  city         String       @default("León")
+  state        String       @default("Guanajuato")
+  sector       String       @default("Comercio local")
+  users        User[]
+  activities   Activity[]
+  devices      Device[]
+  settings     OrganizationSettings?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model OrganizationSettings {
+  id                    String       @id @default(cuid())
+  organizationId        String       @unique
+  monthlyEnergyTarget   Float        @default(1200)
+  monthlyWasteTargetKg  Float        @default(250)
+  carbonTargetKg        Float        @default(800)
+  smartAlerts           Boolean      @default(true)
+  organization          Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id             String       @id @default(cuid())
+  name           String
+  email          String       @unique
+  passwordHash   String
+  role           String       @default("ADMIN")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+}
+
+model Activity {
+  id              String       @id @default(cuid())
+  organizationId  String
+  date            DateTime     @default(now())
+  category        ActivityCategory
+  quantity        Float
+  unit            String
+  source          String?
+  carbonKg        Float
+  energyKwh       Float        @default(0)
+  wasteKg         Float        @default(0)
+  waterLiters     Float        @default(0)
+  notes           String?
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt       DateTime     @default(now())
+
+  @@index([organizationId, date])
+}
+
+enum ActivityCategory {
+  ENERGY
+  WASTE
+  TRANSPORT
+  WATER
+  RECYCLING
+  OTHER
+}
+
+model Device {
+  id              String       @id @default(cuid())
+  organizationId  String
+  name            String
+  type            String
+  location        String
+  status          String       @default("ONLINE")
+  powerW          Float        @default(0)
+  isOn            Boolean      @default(true)
+  lastReadingKwh  Float        @default(0)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  updatedAt       DateTime     @updatedAt
+}

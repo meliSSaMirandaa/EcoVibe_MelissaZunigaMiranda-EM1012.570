@@ -1,0 +1,3 @@
+import { NextResponse } from 'next/server'; import { prisma } from '@/lib/prisma'; import { requireUser } from '@/lib/auth';
+export async function GET(){try{const user=await requireUser();return NextResponse.json(await prisma.device.findMany({where:{organizationId:user.organizationId}}))}catch{return NextResponse.json({error:'Unauthorized'},{status:401})}}
+export async function PATCH(req:Request){try{const user=await requireUser();const {id,isOn}=await req.json();return NextResponse.json(await prisma.device.updateMany({where:{id,organizationId:user.organizationId},data:{isOn:Boolean(isOn)}}))}catch{return NextResponse.json({error:'No autorizado'},{status:401})}}
